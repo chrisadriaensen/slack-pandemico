@@ -126,7 +126,7 @@ app.use('/interactions', slackInteractions.requestListener());
 
 /* REACT TO APP BUTTON INTERACTION */
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
-    return { text: 'Processing... ' + payload.actions.action_id };
+    console.log(`Received button interaction: ${payload}`);
 });
 
 /* START SERVER */
