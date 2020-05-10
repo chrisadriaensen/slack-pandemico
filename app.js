@@ -127,7 +127,11 @@ app.use('/interactions', slackInteractions.requestListener());
 /* REACT TO APP BUTTON INTERACTION */
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
-    respond({ text: 'Thanks for your submission.' });
+    respond({
+        text: 'Thanks for your subscription.',
+        response_type: 'ephemeral',
+        replace_original: false
+    });
 });
 
 /* START SERVER */
