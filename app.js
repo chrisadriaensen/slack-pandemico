@@ -1,9 +1,8 @@
 /* IMPORTS */
-require('dotenv').config();
 const express = require('express');
+const fetch = require('node-fetch');
 const { createEventAdapter } = require('@slack/events-api');
 const { WebClient } = require('@slack/web-api');
-const fetch = require('node-fetch');
 
 /* GLOBAL VARIABLES */
 const app = express();
