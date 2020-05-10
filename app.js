@@ -45,7 +45,7 @@ slackEvents.on('app_mention', async event => {
                     rate: Math.round((this.total / json.data.population) * 10000) / 100
                 },
                 active: {
-                    total: super.confirmed.total - super.deaths.total - json.data.latest_data.recovered,
+                    total: json.data.latest_data.confirmed - json.data.latest_data.deaths - json.data.latest_data.recovered,
                     rate: Math.round((this.total / json.data.population) * 10000) / 100
                 }
             });
