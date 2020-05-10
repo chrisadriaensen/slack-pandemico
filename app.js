@@ -28,6 +28,9 @@ slackEvents.on('app_mention', async event => {
         if (response.ok) {
             const json = await response.json();
 
+            // Calculate active cases
+            const active = json.data.latest_data.confirmed - json.data.latest_data.deaths - json.data.latest_data.recovered;
+
             // Post country data to Slack channel
             postCountryData(event.channel, {
                 country: json.data.name,
@@ -37,16 +40,16 @@ slackEvents.on('app_mention', async event => {
                 deaths: {
                     today: json.data.today.deaths,
                     total: json.data.latest_data.deaths,
-                    rate: Math.round((this.total / json.data.population) * 10000) / 100
+                    rate: Math.round((json.data.latest_data.deaths / json.data.population) * 10000) / 100
                 },
                 confirmed: {
                     today: json.data.today.confirmed,
                     total: json.data.latest_data.confirmed,
-                    rate: Math.round((this.total / json.data.population) * 10000) / 100
+                    rate: Math.round((json.data.latest_data.confirmed / json.data.population) * 10000) / 100
                 },
                 active: {
-                    total: json.data.latest_data.confirmed - json.data.latest_data.deaths - json.data.latest_data.recovered,
-                    rate: Math.round((this.total / json.data.population) * 10000) / 100
+                    total: active,
+                    rate: Math.round((active / json.data.population) * 10000) / 100
                 }
             });
 
@@ -114,8 +117,6 @@ const postCountryData = async (channel, data) => {
             }
         ]
     });
-
-    console.log('Message send...');
 };
 
 /* START SERVER */
