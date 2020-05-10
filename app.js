@@ -2,12 +2,14 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const { createEventAdapter } = require('@slack/events-api');
+const { createMessageAdapter } = require('@slack/interactive-messages');
 const { WebClient } = require('@slack/web-api');
 
 /* GLOBAL VARIABLES */
 const app = express();
 const port = process.env.PORT || 8080;
 const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
+const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET);
 const slackClient = new WebClient(process.env.SLACK_TOKEN);
 const covidAPI = 'http://corona-api.com/countries/COUNTRY_CODE';
 const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
@@ -118,6 +120,14 @@ const postCountryData = async (channel, data) => {
         ]
     });
 };
+
+/* RECEIVE SLACK INTERACTIONS */
+app.use('/interactions', slackInteractions.requestListener());
+
+/* REACT TO APP BUTTON INTERACTION */
+slackInteractions.action({ type: 'button' }, (payload, respond) => {
+    return { text: 'Processing... ' + payload.actions.action_id };
+});
 
 /* START SERVER */
 app.listen(port, () => {
