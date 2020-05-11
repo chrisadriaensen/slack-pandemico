@@ -96,7 +96,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
                 // Respond the health check action
                 case 'pandemico_health_check':
-
+                    console.log('Health check actioN: ' + payload.trigger_id)
                     slackClient.views.open({
                         trigger_id: payload.trigger_id,
                         view: {
