@@ -100,7 +100,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                     slackClient.views.open({
                         trigger_id: payload.trigger_id,
                         view: {
-                            type: model,
+                            type: modal,
                             title: 'Health Check',
                             blocks: [
                                 {
