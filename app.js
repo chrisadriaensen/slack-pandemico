@@ -314,6 +314,7 @@ const postUserHealthCheck = async user => {
 
 /* PERFORM TEAM HEALTH CHECK */
 const performHealthCheck = async () => {
+    console.log('Health check initiated');
     for await (const user of slackClient.paginate('users.list', {})) {
         console.log(user);
         postUserHealthCheck(user.id);
@@ -399,5 +400,5 @@ app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 
     // Schedule team health check
-    setTimeout(performHealthCheck(), 10000);
+    setTimeout(performHealthCheck, 10000);
 });
