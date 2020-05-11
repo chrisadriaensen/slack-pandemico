@@ -17,9 +17,10 @@ const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
 const countries = {};
 const countryEvents = new events.EventEmitter();
 
-/* SLACK EVENTS */
+/* SLACK EVENTS: Register listener */
 app.use('/events', slackEvents.requestListener());
 
+/* SLACK EVENTS: Listen to app mentions */
 slackEvents.on('app_mention', async event => {
     console.log(`Received mention by ${event.user}: ${event.text}`);
 
@@ -28,9 +29,10 @@ slackEvents.on('app_mention', async event => {
 
 });
 
-/* SLACK INTERACTIONS */
+/* SLACK INTERACTIONS: Register listener */
 app.use('/interactions', slackInteractions.requestListener());
 
+/* SLACK INTERACTIONS: Listen to actions */
 slackInteractions.action({}, (payload, respond) => {
     console.log(`Received interaction: ${payload.type}`);
 
@@ -131,7 +133,7 @@ slackInteractions.action({}, (payload, respond) => {
 
 });
 
-/* COUNTRIES */
+/* COUNTRIES: Set country closed status */
 const setCountryClosed = (country, close) => {
 
     // Check if change
@@ -155,8 +157,10 @@ const setCountryClosed = (country, close) => {
 
 };
 
+/* COUNTRIES: Check whether country is closed */
 const isCountryClosed = country => countries[country] ? countries[country].closed : false;
 
+/* COUNTRIES: Post country data to Slack channel */
 const postCountryData = async (country, channel) => {
 
     // Initialize data object
@@ -280,6 +284,7 @@ const postCountryData = async (country, channel) => {
     });
 };
 
+/* COUNTRIES: Listen to country changes */
 countryEvents.on('change', country => {
 
     // Notify subscribers of change
@@ -291,7 +296,7 @@ countryEvents.on('change', country => {
 
 });
 
-/* SUBSCRIPTIONS */
+/* SUBSCRIPTIONS: Set user subscribed status */
 const setUserSubscribed = (country, user, subscribe) => {
 
     // Check if change
@@ -323,9 +328,10 @@ const setUserSubscribed = (country, user, subscribe) => {
 
 };
 
+/* SUBSCRIPTIONS: Check whether user is subscribed */
 const isUserSubscribed = (country, user) => countries[country] && countries[country].subscribers ? countries[country].subscribers.includes(user) : false;
 
-/* HEALTH CHECK */
+/* HEALTH CHECK: Start Slack team health check */
 const startHealthCheck = async () => {
     console.log('Initiated health check');
 
@@ -337,6 +343,7 @@ const startHealthCheck = async () => {
     }
 }
 
+/* HEALTH CHECK: Post health check to user */
 const postHealthCheck = async user => {
     slackClient.chat.postMessage({
         channel: user,
@@ -366,6 +373,7 @@ const postHealthCheck = async user => {
     });
 }
 
+/* HEALTH CHECK: Open health check modal TODO FIX */
 const openHealthCheck = trigger_id => {
     slackClient.views.open({
         trigger_id: trigger_id,
@@ -385,14 +393,23 @@ const openHealthCheck = trigger_id => {
             },
             blocks: [
                 {
+                    type: "input",
+                    element: {
+                        type: "plain_text_input"
+                    },
+                    label: {
+                        type: "plain_text",
+                        text: "Current health status"
+                    }
+                },
+                {
                     type: 'input',
                     label: {
                         type: 'plain_text',
-                        text: 'Please mark applicable statements.'
+                        text: 'Please check applicable statements'
                     },
                     element: {
                         type: 'checkboxes',
-                        action_id: 'pandemico-checkboxes',
                         options: [
                             {
                                 text: {
@@ -416,7 +433,7 @@ const openHealthCheck = trigger_id => {
     });
 }
 
-/* START SERVER */
+/* EXPRESS: Start server */
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 
