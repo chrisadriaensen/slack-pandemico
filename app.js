@@ -13,6 +13,7 @@ const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET)
 const slackClient = new WebClient(process.env.SLACK_TOKEN);
 const covidAPI = 'http://corona-api.com/countries/COUNTRY_CODE';
 const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
+const countries = {};
 
 /* RECEIVE SLACK EVENTS */
 app.use('/events', slackEvents.requestListener());
@@ -72,6 +73,14 @@ const postCountryData = async (channel, data) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
+                    text: `Status for ${data.country}: ${countries[data.country_code] ? 
+                        '*Country locked down; please work from home.*' : 'Country open; please remain cautious.'}`
+                }
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
                     text: `Latest data for ${data.country}:\n` +
                         "```Active:    " + ' '.repeat(7 - data.active.total.toString().length) +
                             data.active.total + " (" + data.active.rate + "%)\n" +
@@ -95,7 +104,8 @@ const postCountryData = async (channel, data) => {
                             type: 'plain_text',
                             text: 'Subscribe'
                         },
-                        action_id: 'pandemico_subscribe'
+                        action_id: 'pandemico_subscribe',
+                        value: data.country_code
                     },
                     {
                         type: 'button',
@@ -104,7 +114,8 @@ const postCountryData = async (channel, data) => {
                             text: 'Lockdown'
                         },
                         style: 'danger',
-                        action_id: 'pandemico_lockdown'
+                        action_id: 'pandemico_lockdown',
+                        value: data.country_code
                     }
                 ]
             },
@@ -141,6 +152,8 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 });
 
             } else if (action.action_id === 'pandemico_lockdown') {
+
+                countries[action.value] = true;
 
                 respond({
                     text: 'Locking down country.',
