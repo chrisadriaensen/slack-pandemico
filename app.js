@@ -113,7 +113,7 @@ const postCountryData = async (channel, data) => {
                 elements: [
                     {
                         type: 'mrkdwn',
-                        text: `Last updated: ${data.updated}`
+                        text: `Source: ${covidAPI}\nLast updated: ${data.updated}`
                     }
                 ]
             }
@@ -127,11 +127,27 @@ app.use('/interactions', slackInteractions.requestListener());
 /* REACT TO APP BUTTON INTERACTION */
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
-    respond({
-        text: 'Thanks for your subscription.',
-        response_type: 'ephemeral',
-        replace_original: false
-    });
+
+    if (payload.type === 'block_actions') {
+        if (payload.actions.action_id === 'pandemico_subscribe') {
+
+            respond({
+                text: 'Thanks for your subscription.',
+                response_type: 'ephemeral',
+                replace_original: false
+            });
+
+        } else if (payload.actions.action_id === 'pandemico_lockdown') {
+
+            respond({
+                text: 'Locking down country.',
+                response_type: 'ephemeral',
+                replace_original: false
+            });
+
+        }
+    }
+
 });
 
 /* START SERVER */
