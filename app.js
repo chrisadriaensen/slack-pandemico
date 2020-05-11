@@ -114,7 +114,7 @@ const postCountryData = async (channel, data) => {
                     {
                         type: 'mrkdwn',
                         text: `Source: ${covidAPI.replace('COUNTRY_CODE', data.country_code)}\n` +
-                              `Updated: ${data.updated}`
+                              `Last updated: ${data.updated}`
                     }
                 ]
             }
@@ -149,17 +149,20 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
         }
 
         respond({
-            text: `Unknown action: ${payload.actions.action_id}`,
+            text: `Sorry, I don't recognize this action: ${payload.actions}`,
             response_type: 'ephemeral',
             replace_original: false
         });
-    }
 
-    respond({
-        text: `Unknown type: ${payload.type}`,
-        response_type: 'ephemeral',
-        replace_original: false
-    });
+    } else {
+
+        respond({
+            text: `Sorry, I don't recognize this type of interaction: ${payload.type}`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
+
+    }
 
 });
 
