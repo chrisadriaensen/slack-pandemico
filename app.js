@@ -149,10 +149,10 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
             if (action.action_id === 'pandemico_subscribe') {
 
                 // Subscribe user
-                subscribeUser(action.value, action.user);
+                subscribeUser(action.value, action.user.id);
 
                 respond({
-                    text: `User subscribed: ${action.user} to ${action.value}`,
+                    text: `User subscribed: ${action.user.username} to ${action.value}`,
                     response_type: 'ephemeral',
                     replace_original: false
                 });
