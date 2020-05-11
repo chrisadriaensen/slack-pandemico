@@ -76,11 +76,6 @@ const postCountryData = async (channel, data) => {
                     text: `Latest status for ${data.country}: ${isCountryClosed(data.country_code) ? 
                         "```CLOSED: Please work from home and refrain from any travel in(to) the country.```" : 
                         "```OPEN:   Please remain cautious, limit office visits and travel in(to) the country.```"}`
-                },
-                accessory: {
-                    type: 'image',
-                    image_url: flagsAPI.replace('COUNTRY_CODE', data.country_code),
-                    alt_text: `flag for ${data.country}`
                 }
             },
             {
@@ -94,6 +89,11 @@ const postCountryData = async (channel, data) => {
                             data.confirmed.total + " (" + data.confirmed.rate + "%) [Today: +" + data.confirmed.today + "]\n" +
                         "Deaths:    " + ' '.repeat(7 - data.deaths.total.toString().length) +
                             data.deaths.total + " (" + data.deaths.rate + "%) [Today: +" + data.deaths.today + "]```"
+                },
+                accessory: {
+                    type: 'image',
+                    image_url: flagsAPI.replace('COUNTRY_CODE', data.country_code),
+                    alt_text: `flag for ${data.country}`
                 }
             },
             {
