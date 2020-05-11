@@ -79,9 +79,6 @@ const postCountryData = async (channel, data) => {
                 }
             },
             {
-                type: "divider"
-            },
-            {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
