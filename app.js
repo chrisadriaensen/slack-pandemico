@@ -73,9 +73,9 @@ const postCountryData = async (channel, data) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `${data.country}: ${isCountryClosed(data.country_code) ? 
-                        "```CLOSED: Please work from home and refrain from any travel in(to) the country.```" : 
-                        "```OPEN: Please remain cautious, limit office visits and travel in(to) the country.```"}`
+                    text: `Latest status for ${data.country}: ` + isCountryClosed(data.country_code) ?
+                        ":bangbang: *Please work from home and refrain from any travel in(to) the country.* :bangbang:" :
+                        ":exclamation: _Please remain cautious, limit office visits and travel in(to) the country._ :exclamation:"
                 }
             },
             {
@@ -110,9 +110,6 @@ const postCountryData = async (channel, data) => {
                 ]
             },
             {
-                type: "divider"
-            },
-            {
                 type: 'actions',
                 elements: [
                     {
@@ -143,7 +140,7 @@ const postCountryData = async (channel, data) => {
 /* RECEIVE SLACK INTERACTIONS */
 app.use('/interactions', slackInteractions.requestListener());
 
-/* REACT TO APP BUTTON INTERACTION */
+/* REACT TO APP BUTTON INTERACTIONS */
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
     console.log(payload);
@@ -234,7 +231,7 @@ const setCountryClosed = (country, status) => {
     countries[country] ? countries[country].closed = status : countries[country] = { closed: status };
 };
 
-/* GET COUNTRY CLOSED STATUS */
+/* CHECK WHETHER COUNTRY IS CLOSED */
 const isCountryClosed = country => countries[country] ? countries[country].closed : false;
 
 /* START SERVER */
