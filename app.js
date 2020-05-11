@@ -22,20 +22,28 @@ app.use('/events', slackEvents.requestListener());
 slackEvents.on('app_mention', async event => {
     console.log(`Received mention by ${event.user}: ${event.text}`);
 
-    // Get country code from input
-    const countryCode = event.text.split(' ')[1];
+    // Post country data to channel
+    postCountryData(event.text.split(' ')[1], event.channel);
+
+});
+
+/* POST COUNTRY DATA TO CHANNEL */
+const postCountryData = async (country, channel) => {
+
+    // Initialize data object
+    let data = {};
 
     // Fetch country data from COVID API
     try {
-        const response = await fetch(covidAPI.replace('COUNTRY_CODE', countryCode));
+        const response = await fetch(covidAPI.replace('COUNTRY_CODE', country));
         if (response.ok) {
             const json = await response.json();
 
             // Calculate active cases
             const active = json.data.latest_data.confirmed - json.data.latest_data.deaths - json.data.latest_data.recovered;
 
-            // Post country data to Slack channel
-            postCountryData(event.channel, {
+            // Assemble data object
+            data = {
                 country: json.data.name,
                 country_code: countryCode,
                 population: json.data.population,
@@ -54,7 +62,7 @@ slackEvents.on('app_mention', async event => {
                     total: active,
                     rate: Math.round((active / json.data.population) * 10000) / 100
                 }
-            });
+            };
 
         } else {
             console.log(response);
@@ -62,10 +70,8 @@ slackEvents.on('app_mention', async event => {
     } catch (error) {
         console.log(error);
     }
-});
 
-/* POST COUNTRY DATA TO CHANNEL */
-const postCountryData = async (channel, data) => {
+    // Post country data to Slack channel
     slackClient.chat.postMessage({
         channel: channel,
         blocks: [
@@ -140,7 +146,6 @@ app.use('/interactions', slackInteractions.requestListener());
 /* REACT TO APP BUTTON INTERACTIONS */
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
-    console.log(payload);
 
     // Respond the block actions
     if (payload.type === 'block_actions') {
@@ -150,10 +155,10 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
             if (action.action_id === 'pandemico_subscribe') {
 
                 // Subscribe user
-                subscribeUser(action.value, action.user);
+                subscribeUser(action.value, payload.user.id);
 
                 respond({
-                    text: `User subscribed: ${action.user} to ${action.value}`,
+                    text: `User subscribed: ${action.user.username} to ${action.value}`,
                     response_type: 'ephemeral',
                     replace_original: false
                 });
@@ -221,6 +226,9 @@ const subscribeUser = (country, user) => {
           subscribers: [ user ]
         };
     }
+
+    // Post country data to user
+    postCountryData(country, user);
 };
 
 /* SET COUNTRY CLOSED STATUS */
