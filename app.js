@@ -120,7 +120,7 @@ const postCountryData = async (country, channel) => {
                             type: 'plain_text',
                             text: 'Subscribe'
                         },
-                        action_id: 'pandemic_subscribe',
+                        action_id: 'pandemico_subscribe',
                         value: country
                     },
                     {
