@@ -158,7 +158,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 subscribeUser(action.value, payload.user.id);
 
                 respond({
-                    text: `User subscribed: ${action.user.username} to ${action.value}`,
+                    text: `User subscribed: ${payload.user.username} to ${action.value}`,
                     response_type: 'ephemeral',
                     replace_original: false
                 });
