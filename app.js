@@ -315,9 +315,11 @@ const postUserHealthCheck = async user => {
 /* PERFORM TEAM HEALTH CHECK */
 const performHealthCheck = async () => {
     console.log('Health check initiated');
-    for await (const user of slackClient.paginate('users.list', {})) {
-        console.log(user);
-        postUserHealthCheck(user.id);
+    for await (const page of slackClient.paginate('users.list')) {
+        for (const member of page.members) {
+            console.log(`posting to ${member.id}`);
+            postUserHealthCheck(member.id);
+        }
     }
 }
 
