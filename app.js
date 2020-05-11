@@ -121,7 +121,7 @@ const postCountryData = async (country, channel) => {
                 elements: [
                     {
                         type: 'mrkdwn',
-                        text: `Updated: ${countries[country] && countries[country].closed_ts ? countries[country].closed_ts : Date.now()}`
+                        text: `Updated: ${countries[country] && countries[country].closed_ts ? countries[country].closed_ts : new Date()}`
                     }
                 ]
             },
@@ -282,11 +282,11 @@ const setClosed = (country, close) => {
         // Change country closed status
         if (countries[country]) {
             countries[country].closed = close;
-            countries[country].closed_ts = Date.now();
+            countries[country].closed_ts = new Date();
         } else {
             countries[country] = {
                 closed: close,
-                closed_ts: Date.now()
+                closed_ts: new Date()
             };
         }
 
