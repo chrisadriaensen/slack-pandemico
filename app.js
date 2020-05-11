@@ -80,15 +80,6 @@ const postCountryData = async (country, channel) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest advice for ${data.country}: ${isClosed(country) ?
-                        "_*Please work from home and refrain from any travel.*_ :bangbang:" :
-                        "_Please remain cautious and limit office visits and travel._ :exclamation:"}`
-                }
-            },
-            {
-                type: 'section',
-                text: {
-                    type: 'mrkdwn',
                     text: `Latest data for ${data.country}:\n` +
                         "```Active:    " + ' '.repeat(7 - data.active.total.toString().length) +
                             data.active.total + " (" + data.active.rate + "%)\n" +
@@ -110,6 +101,27 @@ const postCountryData = async (country, channel) => {
                         type: 'mrkdwn',
                         text: `Source: ${covidAPI.replace('COUNTRY_CODE', country)}\n` +
                               `Updated: ${data.updated}`
+                    }
+                ]
+            },
+            {
+                type: 'divider'
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: `Latest advice for ${data.country}: ${isClosed(country) ?
+                        "_*Please work from home and refrain from any travel.*_" :
+                        "_Please remain cautious and limit office visits and travel._"}`
+                }
+            },
+            {
+                type: 'context',
+                elements: [
+                    {
+                        type: 'mrkdwn',
+                        text: `Updated: ${countries[country] && countries[country].closed_ts ? countries[country].closed_ts : Date.now()}`
                     }
                 ]
             },
@@ -251,7 +263,7 @@ const setSubscribed = (country, user, subscribe) => {
 
         // Unsubscribe
         } else if (countries[country] && countries[country].subscribers) {
-            countries[country].subscribers.remove(user);
+            countries[country].subscribers.splice(countries[country].subscribers.indexOf(user), 1);
         }
 
     }
@@ -259,7 +271,7 @@ const setSubscribed = (country, user, subscribe) => {
 };
 
 /* CHECK WHETHER USER IS SUBSCRIBED */
-const isSubscribed = (country, user) => countries[country] && countries[country].subscribers ? countries[country].subscribers.contains(user) : false;
+const isSubscribed = (country, user) => countries[country] && countries[country].subscribers ? countries[country].subscribers.includes(user) : false;
 
 /* SET COUNTRY CLOSED */
 const setClosed = (country, close) => {
@@ -268,7 +280,15 @@ const setClosed = (country, close) => {
     if (isClosed(country) !== close) {
 
         // Change country closed status
-        countries[country] ? countries[country].closed = close : countries[country] = { closed: close };
+        if (countries[country]) {
+            countries[country].closed = close;
+            countries[country].closed_ts = Date.now();
+        } else {
+            countries[country] = {
+                closed: close,
+                closed_ts: Date.now()
+            };
+        }
 
         // Notify change
         countryEvents.emit('change', country);
