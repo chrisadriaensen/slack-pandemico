@@ -14,6 +14,7 @@ const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET)
 const slackClient = new WebClient(process.env.SLACK_TOKEN);
 const covidAPI = 'http://corona-api.com/countries/COUNTRY_CODE';
 const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
+const imagesURL = 'https://pandemico-images.s3.us-east-2.amazonaws.com/COLOR.png';
 const countries = {};
 const countryEvents = new events.EventEmitter();
 
@@ -114,6 +115,11 @@ const postCountryData = async (country, channel) => {
                     text: `Latest advice for ${data.country}: ${isClosed(country) ?
                         "_*Please work from home and refrain from any travel.*_" :
                         "_Please remain cautious and limit office visits and travel._"}`
+                },
+                accessory: {
+                    type: 'image',
+                    image_url: imagesURL.replace('COLOR', isClosed(country) ? 'red' : 'amber'),
+                    alt_text: `status for ${data.country}`
                 }
             },
             {
