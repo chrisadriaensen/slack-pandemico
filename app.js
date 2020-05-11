@@ -75,8 +75,11 @@ const postCountryData = async (channel, data) => {
                     type: 'mrkdwn',
                     text: `Latest status for ${data.country}: ${isCountryClosed(data.country_code) ? 
                         "```CLOSED: Please work from home and refrain from any travel in(to) the country.```" : 
-                        "```OPEN:   Please remain cautious, limit office visits and travel in(to) the country.```"}`
+                        "```OPEN: Please remain cautious, limit office visits and travel in(to) the country.```"}`
                 }
+            },
+            {
+                type: "divider"
             },
             {
                 type: 'section',
@@ -105,6 +108,9 @@ const postCountryData = async (channel, data) => {
                             `Updated: ${data.updated}`
                     }
                 ]
+            },
+            {
+                type: "divider"
             },
             {
                 type: 'actions',
