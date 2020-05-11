@@ -14,7 +14,6 @@ const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET)
 const slackClient = new WebClient(process.env.SLACK_TOKEN);
 const covidAPI = 'http://corona-api.com/countries/COUNTRY_CODE';
 const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
-const imagesURL = 'https://pandemico-images.s3.us-east-2.amazonaws.com/COLOR.png';
 const countries = {};
 const countryEvents = new events.EventEmitter();
 
@@ -97,22 +96,8 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 // Respond the health check action
                 case 'pandemico_health_check':
 
-                    slackClient.views.open({
-                        trigger_id: payload.trigger_id,
-                        view: {
-                            type: 'modal',
-                            title: 'Health Check',
-                            blocks: [
-                                {
-                                    type: 'section',
-                                    text: {
-                                        type: 'mrkdwn',
-                                        text: 'This is my first modal!'
-                                    }
-                                }
-                            ]
-                        }
-                    });
+                    // Open health check
+                    openHealthCheck(payload.trigger_id);
 
                     respond({
                         text: `User health check: ${payload.user.username}`,
@@ -232,9 +217,14 @@ const postCountryData = async (country, channel) => {
                         "      _Please remain cautious and limit office visits and travel._"}`
                 },
                 accessory: {
-                    type: 'image',
-                    image_url: imagesURL.replace('COLOR', isClosed(country) ? 'red' : 'amber'),
-                    alt_text: `status for ${data.country}`
+                    type: 'button',
+                    text: {
+                        type: 'plain_text',
+                        text: isClosed(country) ? 'Relax' : 'Secure'
+                    },
+                    style: isClosed(country) ? 'primary' : 'danger',
+                    action_id: isClosed(country) ? 'pandemico_open' : 'pandemico_close',
+                    value: country
                 }
             },
             {
@@ -257,16 +247,6 @@ const postCountryData = async (country, channel) => {
                         },
                         action_id: isSubscribed(country, channel) ? 'pandemico_unsubscribe' : 'pandemico_subscribe',
                         value: country
-                    },
-                    {
-                        type: 'button',
-                        text: {
-                            type: 'plain_text',
-                            text: isClosed(country) ? 'Open Country' : 'Close Country'
-                        },
-                        style: isClosed(country) ? 'primary' : 'danger',
-                        action_id: isClosed(country) ? 'pandemico_open' : 'pandemico_close',
-                        value: country
                     }
                 ]
             }
@@ -274,38 +254,8 @@ const postCountryData = async (country, channel) => {
     });
 };
 
-/* POST HEALTH CHECK TO USER */
-const postHealthCheck = async user => {
-    slackClient.chat.postMessage({
-       channel: user,
-       blocks: [
-           {
-               type: 'section',
-               text: {
-                   type: 'mrkdwn',
-                   text: 'Please perform your regular health check.'
-               }
-           },
-           {
-               type: 'actions',
-               elements: [
-                   {
-                       type: 'button',
-                       text: {
-                           type: 'plain_text',
-                           text: 'Start Health Check'
-                       },
-                       action_id: 'pandemico_health_check',
-                       value: user
-                   }
-               ]
-           }
-       ]
-    });
-}
-
-/* PERFORM TEAM HEALTH CHECK */
-const performHealthCheck = async () => {
+/* START TEAM HEALTH CHECK */
+const startHealthCheck = async () => {
     console.log('Initiated health check');
 
     // Post health check to every user
@@ -314,6 +264,86 @@ const performHealthCheck = async () => {
             postHealthCheck(member.id);
         }
     }
+}
+
+/* POST HEALTH CHECK TO USER */
+const postHealthCheck = async user => {
+    slackClient.chat.postMessage({
+        channel: user,
+        blocks: [
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: 'Please perform your regular health check.'
+                }
+            },
+            {
+                type: 'actions',
+                elements: [
+                    {
+                        type: 'button',
+                        text: {
+                            type: 'plain_text',
+                            text: 'Start Health Check'
+                        },
+                        action_id: 'pandemico_health_check',
+                        value: user
+                    }
+                ]
+            }
+        ]
+    });
+}
+
+/* OPEN HEALTH CHECK */
+const openHealthCheck = trigger_id => {
+    slackClient.views.open({
+        trigger_id: trigger_id,
+        view: {
+            type: 'modal',
+            title: {
+                type: "plain_text",
+                text: "Health Check"
+            },
+            submit: {
+                type: "plain_text",
+                text: "Submit"
+            },
+            close: {
+                type: "plain_text",
+                text: "Cancel"
+            },
+            blocks: [
+                {
+                    type: 'section',
+                    text: {
+                        type: 'plain_text',
+                        text: 'Please fill up below questionnaire.'
+                    }
+                },
+                {
+                    type: 'checkboxes',
+                    options: [
+                        {
+                            text: {
+                                type: 'plain_text',
+                                text: 'I had COVID19 and recovered'
+                            },
+                            value: ''
+                        },
+                        {
+                            text: {
+                                type: 'plain_text',
+                                text: 'I received a COVID19 vacin'
+                            },
+                            value: ''
+                        }
+                    ]
+                }
+            ]
+        }
+    });
 }
 
 /* SET COUNTRY-USER SUBSCRIBED */
@@ -395,5 +425,5 @@ app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 
     // Schedule team health check
-    setTimeout(performHealthCheck, 10000);
+    setTimeout(startHealthCheck, 10000);
 });
