@@ -73,7 +73,7 @@ const postCountryData = async (channel, data) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest status for ${data.country}: ${isCountryClosed(data.country_code) ? 
+                    text: `${data.country}: ${isCountryClosed(data.country_code) ? 
                         "```CLOSED: Please work from home and refrain from any travel in(to) the country.```" : 
                         "```OPEN: Please remain cautious, limit office visits and travel in(to) the country.```"}`
                 }
@@ -146,6 +146,7 @@ app.use('/interactions', slackInteractions.requestListener());
 /* REACT TO APP BUTTON INTERACTION */
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
+    console.log(payload);
 
     // Respond the block actions
     if (payload.type === 'block_actions') {
