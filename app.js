@@ -98,12 +98,6 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
                     // Open health check
                     openHealthCheck(payload.trigger_id);
-
-                    respond({
-                        text: `User health check: ${payload.user.username}`,
-                        response_type: 'ephemeral',
-                        replace_original: false
-                    });
                     break;
 
                 // Respond the unknown action
@@ -327,16 +321,16 @@ const openHealthCheck = trigger_id => {
                             {
                                 text: {
                                     type: 'plain_text',
-                                    text: 'I had COVID19 and recovered.',
-                                    value: 'recovered'
-                                }
+                                    text: 'I had COVID19 and recovered.'
+                                },
+                                value: 'recovered'
                             },
                             {
                                 text: {
                                     type: 'plain_text',
-                                    text: 'I received a COVID19 vaccine.',
-                                    value: 'vaccinated'
-                                }
+                                    text: 'I received a COVID19 vaccine.'
+                                },
+                                value: 'vaccinated'
                             }
                         ]
                     }
