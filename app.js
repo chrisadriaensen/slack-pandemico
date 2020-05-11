@@ -132,9 +132,9 @@ const postCountryData = async (country, channel) => {
                         type: 'button',
                         text: {
                             type: 'plain_text',
-                            text: isSubscribed(channel) ? 'Unsubscribe' : 'Subscribe'
+                            text: isSubscribed(country, channel) ? 'Unsubscribe' : 'Subscribe'
                         },
-                        action_id: isSubscribed(channel) ? 'pandemico_unsubscribe' : 'pandemico_subscribe',
+                        action_id: isSubscribed(country, channel) ? 'pandemico_unsubscribe' : 'pandemico_subscribe',
                         value: country
                     },
                     {
