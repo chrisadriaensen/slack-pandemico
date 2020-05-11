@@ -124,6 +124,11 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
 });
 
+/* REACT TO APP VIEW SUBMISSIONS */
+slackInteractions.action({ type: 'view_submission' }, (payload, respond) => {
+    console.log(`Received a view submission: ${payload.type}`);
+});
+
 /* POST COUNTRY DATA TO CHANNEL */
 const postCountryData = async (country, channel) => {
 
