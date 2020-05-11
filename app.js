@@ -73,7 +73,7 @@ const postCountryData = async (channel, data) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest status for ${data.country}: ${countries[data.country_code].closed ? 
+                    text: `Latest status for ${data.country}: ${isCountryClosed(data.country_code) ? 
                         "```CLOSED: Please work from home and refrain from any travel in(to) the country.```" : 
                         "```OPEN:   Please remain cautious, limit office visits and travel in(to) the country.```"}`
                 },
@@ -97,6 +97,16 @@ const postCountryData = async (channel, data) => {
                 }
             },
             {
+                type: 'context',
+                elements: [
+                    {
+                        type: 'mrkdwn',
+                        text: `Source: ${covidAPI.replace('COUNTRY_CODE', data.country_code)}\n` +
+                            `Updated: ${data.updated}`
+                    }
+                ]
+            },
+            {
                 type: 'actions',
                 elements: [
                     {
@@ -112,21 +122,11 @@ const postCountryData = async (channel, data) => {
                         type: 'button',
                         text: {
                             type: 'plain_text',
-                            text: 'Lockdown'
+                            text: isCountryClosed(data.country_code) ? 'Open Country' : 'Close Country'
                         },
-                        style: 'danger',
-                        action_id: 'pandemico_lockdown',
+                        style: isCountryClosed(data.country_code) ? 'primary' : 'danger',
+                        action_id: isCountryClosed(data.country_code) ? 'pandemico_open' : 'pandemico_close',
                         value: data.country_code
-                    }
-                ]
-            },
-            {
-                type: 'context',
-                elements: [
-                    {
-                        type: 'mrkdwn',
-                        text: `Source: ${covidAPI.replace('COUNTRY_CODE', data.country_code)}\n` +
-                              `Last updated: ${data.updated}`
                     }
                 ]
             }
@@ -141,27 +141,47 @@ app.use('/interactions', slackInteractions.requestListener());
 slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
 
+    // Respond the block actions
     if (payload.type === 'block_actions') {
         for (const action of payload.actions) {
 
+            // Respond the subscribe action
             if (action.action_id === 'pandemico_subscribe') {
 
+                // Subscribe user
+                subscribeUser(action.value, action.user);
+
                 respond({
-                    text: 'Thanks for your subscription.',
+                    text: `User subscribed: ${action.user} to ${action.value}`,
                     response_type: 'ephemeral',
                     replace_original: false
                 });
 
-            } else if (action.action_id === 'pandemico_lockdown') {
+            // Respond the close action
+            } else if (action.action_id === 'pandemico_close') {
 
-                countries[action.value].closed = true;
+                // Close country
+                setCountryClosed(action.value, true);
 
                 respond({
-                    text: 'Locking down country.',
+                    text: `Country closed: ${action.value}`,
                     response_type: 'ephemeral',
                     replace_original: false
                 });
 
+            // Respond the open action
+            } else if (action.action_id === 'pandemico_open') {
+
+                // Open country
+                setCountryClosed(action.value, false);
+
+                respond({
+                    text: `Country opened: ${action.value}`,
+                    response_type: 'ephemeral',
+                    replace_original: false
+                });
+
+            // Respond the unknown action
             } else {
 
                 respond({
@@ -174,6 +194,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
         }
 
+    // Respond the unknown interaction types
     } else {
 
         respond({
@@ -185,6 +206,29 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
     }
 
 });
+
+/* SUBSCRIBE USER TO COUNTRY */
+const subscribeUser = (country, user) => {
+    if (countries[country]) {
+        if (countries[country].subscribers) {
+            countries[country].subscribers.push(user);
+        } else {
+            countries[country].subscribers = [ user ];
+        }
+    } else {
+        countries[country] = {
+          subscribers: [ user ]
+        };
+    }
+};
+
+/* SET COUNTRY CLOSED STATUS */
+const setCountryClosed = (country, status) => {
+    countries[country] ? countries[country].closed = status : countries[country] = { closed: status };
+};
+
+/* GET COUNTRY CLOSED STATUS */
+const isCountryClosed = country => countries[country] ? countries[country].closed : false;
 
 /* START SERVER */
 app.listen(port, () => {
