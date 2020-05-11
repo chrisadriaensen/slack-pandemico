@@ -112,9 +112,9 @@ const postCountryData = async (country, channel) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest advice for ${data.country}: ${isClosed(country) ?
-                        "_*Please work from home and refrain from any travel.*_" :
-                        "_Please remain cautious and limit office visits and travel._"}`
+                    text: `Latest advice for ${data.country}:\n\n${isClosed(country) ?
+                        "      _*Please work from home and refrain from any travel.*_" :
+                        "      _Please remain cautious and limit office visits and travel._"}`
                 },
                 accessory: {
                     type: 'image',
