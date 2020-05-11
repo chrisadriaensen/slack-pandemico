@@ -316,10 +316,29 @@ const openHealthCheck = trigger_id => {
             },
             blocks: [
                 {
-                    type: 'section',
-                    text: {
+                    type: 'input',
+                    label: {
                         type: 'plain_text',
-                        text: 'Please fill out the questionnaire.'
+                        text: 'Please mark applicable statements.'
+                    },
+                    element: {
+                        type: 'checkboxes',
+                        options: [
+                            {
+                                text: {
+                                    type: 'plain_text',
+                                    text: 'I had COVID19 and recovered.',
+                                    value: 'recovered'
+                                }
+                            },
+                            {
+                                text: {
+                                    type: 'plain_text',
+                                    text: 'I received a COVID19 vaccine.',
+                                    value: 'vaccinated'
+                                }
+                            }
+                        ]
                     }
                 }
             ]
