@@ -220,7 +220,7 @@ const postCountryData = async (country, channel) => {
                     type: 'button',
                     text: {
                         type: 'plain_text',
-                        text: isClosed(country) ? 'Relax' : 'Secure'
+                        text: isClosed(country) ? 'Open Country' : 'Close Country'
                     },
                     style: isClosed(country) ? 'primary' : 'danger',
                     action_id: isClosed(country) ? 'pandemico_open' : 'pandemico_close',
@@ -319,27 +319,8 @@ const openHealthCheck = trigger_id => {
                     type: 'section',
                     text: {
                         type: 'plain_text',
-                        text: 'Please fill up below questionnaire.'
+                        text: 'Please fill out the questionnaire.'
                     }
-                },
-                {
-                    type: 'checkboxes',
-                    options: [
-                        {
-                            text: {
-                                type: 'plain_text',
-                                text: 'I had COVID19 and recovered'
-                            },
-                            value: ''
-                        },
-                        {
-                            text: {
-                                type: 'plain_text',
-                                text: 'I received a COVID19 vacin'
-                            },
-                            value: ''
-                        }
-                    ]
                 }
             ]
         }
