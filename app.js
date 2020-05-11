@@ -392,13 +392,13 @@ const openHealthCheck = trigger_id => {
                     },
                     element: {
                         type: 'checkboxes',
+                        action_id: 'pandemico-checkboxes',
                         options: [
                             {
                                 text: {
                                     type: 'plain_text',
                                     text: 'I had COVID19 and recovered.'
                                 },
-                                action_id: 'pandemico-recovered',
                                 value: 'recovered'
                             },
                             {
@@ -406,7 +406,6 @@ const openHealthCheck = trigger_id => {
                                     type: 'plain_text',
                                     text: 'I received a COVID19 vaccine.'
                                 },
-                                action_id: 'pandemico-vaccinated',
                                 value: 'vaccinated'
                             }
                         ]
