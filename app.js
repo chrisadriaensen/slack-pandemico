@@ -45,7 +45,6 @@ const postCountryData = async (country, channel) => {
             // Assemble data object
             data = {
                 country: json.data.name,
-                country_code: country,
                 population: json.data.population,
                 updated: new Date(json.data.updated_at),
                 deaths: {
@@ -79,7 +78,7 @@ const postCountryData = async (country, channel) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest advice for ${data.country}: ${isCountryClosed(data.country_code) ?
+                    text: `Latest advice for ${data.country}: ${isClosed(country) ?
                         "_*Please work from home and refrain from any travel.*_ :bangbang:" :
                         "_Please remain cautious and limit office visits and travel._ :exclamation:"}`
                 }
@@ -98,7 +97,7 @@ const postCountryData = async (country, channel) => {
                 },
                 accessory: {
                     type: 'image',
-                    image_url: flagsAPI.replace('COUNTRY_CODE', data.country_code),
+                    image_url: flagsAPI.replace('COUNTRY_CODE', country),
                     alt_text: `flag for ${data.country}`
                 }
             },
@@ -107,8 +106,8 @@ const postCountryData = async (country, channel) => {
                 elements: [
                     {
                         type: 'mrkdwn',
-                        text: `Source: ${covidAPI.replace('COUNTRY_CODE', data.country_code)}\n` +
-                            `Updated: ${data.updated}`
+                        text: `Source: ${covidAPI.replace('COUNTRY_CODE', country)}\n` +
+                              `Updated: ${data.updated}`
                     }
                 ]
             },
@@ -121,18 +120,18 @@ const postCountryData = async (country, channel) => {
                             type: 'plain_text',
                             text: 'Subscribe'
                         },
-                        action_id: 'pandemico_subscribe',
-                        value: data.country_code
+                        action_id: 'pandemic_subscribe',
+                        value: country
                     },
                     {
                         type: 'button',
                         text: {
                             type: 'plain_text',
-                            text: isCountryClosed(data.country_code) ? 'Open Country' : 'Close Country'
+                            text: isClosed(country) ? 'Open Country' : 'Close Country'
                         },
-                        style: isCountryClosed(data.country_code) ? 'primary' : 'danger',
-                        action_id: isCountryClosed(data.country_code) ? 'pandemico_open' : 'pandemico_close',
-                        value: data.country_code
+                        style: isClosed(country) ? 'primary' : 'danger',
+                        action_id: isClosed(country) ? 'pandemico_open' : 'pandemico_close',
+                        value: country
                     }
                 ]
             }
@@ -167,7 +166,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
             } else if (action.action_id === 'pandemico_close') {
 
                 // Close country
-                setCountryClosed(action.value, true);
+                setClosed(action.value, true);
 
                 respond({
                     text: `Country closed: ${action.value}`,
@@ -179,7 +178,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
             } else if (action.action_id === 'pandemico_open') {
 
                 // Open country
-                setCountryClosed(action.value, false);
+                setClosed(action.value, false);
 
                 respond({
                     text: `Country opened: ${action.value}`,
@@ -232,12 +231,12 @@ const subscribeUser = (country, user) => {
 };
 
 /* SET COUNTRY CLOSED STATUS */
-const setCountryClosed = (country, status) => {
+const setClosed = (country, status) => {
     countries[country] ? countries[country].closed = status : countries[country] = { closed: status };
 };
 
 /* CHECK WHETHER COUNTRY IS CLOSED */
-const isCountryClosed = country => countries[country] ? countries[country].closed : false;
+const isClosed = country => countries[country] ? countries[country].closed : false;
 
 /* START SERVER */
 app.listen(port, () => {
