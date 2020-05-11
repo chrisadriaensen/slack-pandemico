@@ -130,7 +130,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
 
     if (payload.type === 'block_actions') {
-        for (action in payload.actions) {
+        for (const action of payload.actions) {
 
             if (action.action_id === 'pandemico_subscribe') {
 
