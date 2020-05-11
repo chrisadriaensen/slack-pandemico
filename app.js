@@ -21,12 +21,124 @@ const countryEvents = new events.EventEmitter();
 /* RECEIVE SLACK EVENTS */
 app.use('/events', slackEvents.requestListener());
 
+/* RECEIVE SLACK INTERACTIONS */
+app.use('/interactions', slackInteractions.requestListener());
+
 /* REACT TO APP MENTIONS */
 slackEvents.on('app_mention', async event => {
     console.log(`Received mention by ${event.user}: ${event.text}`);
 
     // Post country data to channel
     postCountryData(event.text.split(' ')[1], event.channel);
+
+});
+
+/* REACT TO APP BUTTON INTERACTIONS */
+slackInteractions.action({ type: 'button' }, (payload, respond) => {
+    console.log(`Received button interaction: ${payload.type}`);
+
+    // Respond the block actions
+    if (payload.type === 'block_actions') {
+        for (const action of payload.actions) {
+            switch (action.action_id) {
+
+                // Respond the subscribe action
+                case 'pandemico_subscribe':
+
+                    // Subscribe user
+                    setSubscribed(action.value, payload.user.id, true);
+
+                    respond({
+                        text: `User subscribed: ${payload.user.username} to ${action.value}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+                    break;
+
+                // Respond the unsubscribe action
+                case 'pandemico_unsubscribe':
+
+                    // Unsubscribe user
+                    setSubscribed(action.value, payload.user.id, false);
+
+                    respond({
+                        text: `User unsubscribed: ${payload.user.username} from ${action.value}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+                    break;
+
+                // Respond the close action
+                case 'pandemico_close':
+
+                    // Close country
+                    setClosed(action.value, true);
+
+                    respond({
+                        text: `Country closed: ${action.value}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+                    break;
+
+                // Respond the open action
+                case 'pandemico_open':
+
+                    // Open country
+                    setClosed(action.value, false);
+
+                    respond({
+                        text: `Country opened: ${action.value}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+                    break;
+
+                // Respond the healthy action
+                case 'pandemico_healthy':
+
+                    // TODO
+
+                    respond({
+                        text: `User healthy: ${action.value}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+                    break;
+
+                // Respond the sick action
+                case 'pandemico_sick':
+
+                    // TODO
+
+                    respond({
+                        text: `User sick: ${action.value}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+                    break;
+
+                // Respond the unknown action
+                default:
+
+                    respond({
+                        text: `Sorry, I don't recognize this action: ${action}`,
+                        response_type: 'ephemeral',
+                        replace_original: false
+                    });
+            }
+        }
+
+    // Respond the unknown interaction types
+    } else {
+
+        respond({
+            text: `Sorry, I don't recognize this type of interaction: ${payload.type}`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
+
+    }
 
 });
 
@@ -83,11 +195,11 @@ const postCountryData = async (country, channel) => {
                     type: 'mrkdwn',
                     text: `Latest data for ${data.country}:\n` +
                         "```Active:    " + ' '.repeat(7 - data.active.total.toString().length) +
-                            data.active.total + " (" + data.active.rate + "%)\n" +
+                        data.active.total + " (" + data.active.rate + "%)\n" +
                         "Confirmed: " + ' '.repeat(7 - data.confirmed.total.toString().length) +
-                            data.confirmed.total + " (" + data.confirmed.rate + "%) [Today: +" + data.confirmed.today + "]\n" +
+                        data.confirmed.total + " (" + data.confirmed.rate + "%) [Today: +" + data.confirmed.today + "]\n" +
                         "Deaths:    " + ' '.repeat(7 - data.deaths.total.toString().length) +
-                            data.deaths.total + " (" + data.deaths.rate + "%) [Today: +" + data.deaths.today + "]```"
+                        data.deaths.total + " (" + data.deaths.rate + "%) [Today: +" + data.deaths.today + "]```"
                 },
                 accessory: {
                     type: 'image',
@@ -101,7 +213,7 @@ const postCountryData = async (country, channel) => {
                     {
                         type: 'mrkdwn',
                         text: `Source: ${covidAPI.replace('COUNTRY_CODE', country)}\n` +
-                              `Updated: ${data.updated}`
+                            `Updated: ${data.updated}`
                     }
                 ]
             },
@@ -159,90 +271,54 @@ const postCountryData = async (country, channel) => {
     });
 };
 
-/* RECEIVE SLACK INTERACTIONS */
-app.use('/interactions', slackInteractions.requestListener());
+/* POST HEALTH CHECK TO USER */
+const postUserHealthCheck = async user => {
+    slackClient.chat.postMessage({
+       channel: user,
+       blocks: [
+           {
+               type: 'section',
+               text: {
+                   type: 'mrkdwn',
+                   text: 'Please indicate your current status.'
+               }
+           },
+           {
+               type: 'actions',
+               elements: [
+                   {
+                       type: 'button',
+                       text: {
+                           type: 'plain_text',
+                           text: 'Healthy'
+                       },
+                       style: 'primary',
+                       action_id: 'pandemico_healthy',
+                       value: user
+                   },
+                   {
+                       type: 'button',
+                       text: {
+                           type: 'plain_text',
+                           text: 'Sick'
+                       },
+                       style: 'danger',
+                       action_id: 'pandemico_sick',
+                       value: user
+                   }
+               ]
+           }
+       ]
+    });
+}
 
-/* REACT TO APP BUTTON INTERACTIONS */
-slackInteractions.action({ type: 'button' }, (payload, respond) => {
-    console.log(`Received button interaction: ${payload.type}`);
-
-    // Respond the block actions
-    if (payload.type === 'block_actions') {
-        for (const action of payload.actions) {
-
-            // Respond the subscribe action
-            if (action.action_id === 'pandemico_subscribe') {
-
-                // Subscribe user
-                setSubscribed(action.value, payload.user.id, true);
-
-                respond({
-                    text: `User subscribed: ${payload.user.username} to ${action.value}`,
-                    response_type: 'ephemeral',
-                    replace_original: false
-                });
-
-            // Respond the unsubscribe action
-            } else if (action.action_id === 'pandemico_unsubscribe') {
-
-                // Unsubscribe user
-                setSubscribed(action.value, payload.user.id, false);
-
-                respond({
-                    text: `User unsubscribed: ${payload.user.username} from ${action.value}`,
-                    response_type: 'ephemeral',
-                    replace_original: false
-                });
-
-            // Respond the close action
-            } else if (action.action_id === 'pandemico_close') {
-
-                // Close country
-                setClosed(action.value, true);
-
-                respond({
-                    text: `Country closed: ${action.value}`,
-                    response_type: 'ephemeral',
-                    replace_original: false
-                });
-
-            // Respond the open action
-            } else if (action.action_id === 'pandemico_open') {
-
-                // Open country
-                setClosed(action.value, false);
-
-                respond({
-                    text: `Country opened: ${action.value}`,
-                    response_type: 'ephemeral',
-                    replace_original: false
-                });
-
-            // Respond the unknown action
-            } else {
-
-                respond({
-                    text: `Sorry, I don't recognize this action: ${action}`,
-                    response_type: 'ephemeral',
-                    replace_original: false
-                });
-
-            }
-
-        }
-
-    // Respond the unknown interaction types
-    } else {
-
-        respond({
-            text: `Sorry, I don't recognize this type of interaction: ${payload.type}`,
-            response_type: 'ephemeral',
-            replace_original: false
-        });
-
+/* PERFORM TEAM HEALTH CHECK */
+const performHealthCheck = async () => {
+    for await (const user of slackClient.paginate('users.list', {})) {
+        console.log(user);
+        postUserHealthCheck(user.id);
     }
-
-});
+}
 
 /* SET COUNTRY-USER SUBSCRIBED */
 const setSubscribed = (country, user, subscribe) => {
@@ -321,4 +397,7 @@ countryEvents.on('change', country => {
 /* START SERVER */
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
+
+    // Schedule team health check
+    setTimeout(performHealthCheck(), 10000);
 });
