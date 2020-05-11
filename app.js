@@ -230,7 +230,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 const setSubscribed = (country, user, subscribe) => {
 
     // Check if change
-    if (isSubscribed(country, user) === subscribe) {
+    if (isSubscribed(country, user) !== subscribe) {
 
         // Subscribe
         if (subscribe) {
@@ -265,7 +265,7 @@ const isSubscribed = (country, user) => countries[country] && countries[country]
 const setClosed = (country, close) => {
 
     // Check if change
-    if (isClosed(country) === close) {
+    if (isClosed(country) !== close) {
 
         // Change country closed status
         countries[country] ? countries[country].closed = close : countries[country] = { closed: close };
