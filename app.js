@@ -73,8 +73,8 @@ const postCountryData = async (channel, data) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest status for ${data.country}: ${isCountryClosed(data.country_code) ?
-                        "*Please work from home and refrain from any travel.* :bangbang:" :
+                    text: `Latest advice for ${data.country}: ${isCountryClosed(data.country_code) ?
+                        "_*Please work from home and refrain from any travel.*_ :bangbang:" :
                         "_Please remain cautious and limit office visits and travel._ :exclamation:"}`
                 }
             },
