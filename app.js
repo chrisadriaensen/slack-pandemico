@@ -120,9 +120,9 @@ const postCountryData = async (country, channel) => {
                         type: 'button',
                         text: {
                             type: 'plain_text',
-                            text: 'Subscribe'
+                            text: isSubscribed(channel) ? 'Unsubscribe' : 'Subscribe'
                         },
-                        action_id: 'pandemico_subscribe',
+                        action_id: isSubscribed(channel) ? 'pandemico_unsubscribe' : 'pandemico_subscribe',
                         value: country
                     },
                     {
@@ -156,10 +156,22 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
             if (action.action_id === 'pandemico_subscribe') {
 
                 // Subscribe user
-                subscribeUser(action.value, payload.user.id);
+                setSubscribed(action.value, payload.user.id, true);
 
                 respond({
                     text: `User subscribed: ${payload.user.username} to ${action.value}`,
+                    response_type: 'ephemeral',
+                    replace_original: false
+                });
+
+            // Respond the unsubscribe action
+            } else if (action.action_id === 'pandemico_unsubscribe') {
+
+                // Unsubscribe user
+                setSubscribed(action.value, payload.user.id, false);
+
+                respond({
+                    text: `User unsubscribed: ${payload.user.username} from ${action.value}`,
                     response_type: 'ephemeral',
                     replace_original: false
                 });
@@ -214,32 +226,54 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
 });
 
-/* SUBSCRIBE USER TO COUNTRY */
-const subscribeUser = (country, user) => {
-    if (countries[country]) {
-        if (countries[country].subscribers) {
-            countries[country].subscribers.push(user);
-        } else {
-            countries[country].subscribers = [ user ];
+/* SET COUNTRY-USER SUBSCRIBED */
+const setSubscribed = (country, user, subscribe) => {
+
+    // Check if change
+    if (isSubscribed(country, user) === subscribe) {
+
+        // Subscribe
+        if (subscribe) {
+            if (countries[country]) {
+                if (countries[country].subscribers) {
+                    countries[country].subscribers.push(user);
+                } else {
+                    countries[country].subscribers = [user];
+                }
+            } else {
+                countries[country] = {
+                    subscribers: [user]
+                };
+            }
+
+            // Post country data to user
+            postCountryData(country, user);
+
+        // Unsubscribe
+        } else if (countries[country] && countries[country].subscribers) {
+            countries[country].subscribers.remove(user);
         }
-    } else {
-        countries[country] = {
-          subscribers: [ user ]
-        };
+
     }
 
-    // Post country data to user
-    postCountryData(country, user);
 };
 
-/* SET COUNTRY CLOSED STATUS */
-const setClosed = (country, status) => {
+/* CHECK WHETHER USER IS SUBSCRIBED */
+const isSubscribed = (country, user) => countries[country] && countries[country].subscribers ? countries[country].subscribers.contains(user) : false;
 
-    // Change country closed status
-    countries[country] ? countries[country].closed = status : countries[country] = { closed: status };
+/* SET COUNTRY CLOSED */
+const setClosed = (country, close) => {
 
-    // Notify change
-    countryEvents.emit('change', country);
+    // Check if change
+    if (isClosed(country) === close) {
+
+        // Change country closed status
+        countries[country] ? countries[country].closed = close : countries[country] = { closed: close };
+
+        // Notify change
+        countryEvents.emit('change', country);
+
+    }
 
 };
 
