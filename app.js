@@ -130,29 +130,35 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
     console.log(`Received button interaction: ${payload.type}`);
 
     if (payload.type === 'block_actions') {
-        if (payload.actions.action_id === 'pandemico_subscribe') {
+        for (action in payload.actions) {
 
-            respond({
-                text: 'Thanks for your subscription.',
-                response_type: 'ephemeral',
-                replace_original: false
-            });
+            if (action.action_id === 'pandemico_subscribe') {
 
-        } else if (payload.actions.action_id === 'pandemico_lockdown') {
+                respond({
+                    text: 'Thanks for your subscription.',
+                    response_type: 'ephemeral',
+                    replace_original: false
+                });
 
-            respond({
-                text: 'Locking down country.',
-                response_type: 'ephemeral',
-                replace_original: false
-            });
+            } else if (action.action_id === 'pandemico_lockdown') {
+
+                respond({
+                    text: 'Locking down country.',
+                    response_type: 'ephemeral',
+                    replace_original: false
+                });
+
+            } else {
+
+                respond({
+                    text: `Sorry, I don't recognize this action: ${action}`,
+                    response_type: 'ephemeral',
+                    replace_original: false
+                });
+
+            }
 
         }
-
-        respond({
-            text: `Sorry, I don't recognize this action: ${payload.actions}`,
-            response_type: 'ephemeral',
-            replace_original: false
-        });
 
     } else {
 
