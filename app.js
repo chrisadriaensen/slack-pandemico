@@ -34,7 +34,7 @@ app.use('/interactions', slackInteractions.requestListener());
 slackInteractions.action({}, (payload, respond) => {
     console.log(`Received interaction: ${payload.type}`);
 
-    // Respond the block actions
+    // Respond to block actions
     if (payload.type === 'block_actions') {
         for (const action of payload.actions) {
             switch (action.action_id) {
@@ -398,6 +398,7 @@ const openHealthCheck = trigger_id => {
                                     type: 'plain_text',
                                     text: 'I had COVID19 and recovered.'
                                 },
+                                action_id: 'pandemico-recovered',
                                 value: 'recovered'
                             },
                             {
@@ -405,6 +406,7 @@ const openHealthCheck = trigger_id => {
                                     type: 'plain_text',
                                     text: 'I received a COVID19 vaccine.'
                                 },
+                                action_id: 'pandemico-vaccinated',
                                 value: 'vaccinated'
                             }
                         ]
