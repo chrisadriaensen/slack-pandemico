@@ -45,7 +45,7 @@ const postCountryData = async (country, channel) => {
             // Assemble data object
             data = {
                 country: json.data.name,
-                country_code: countryCode,
+                country_code: country,
                 population: json.data.population,
                 updated: new Date(json.data.updated_at),
                 deaths: {
