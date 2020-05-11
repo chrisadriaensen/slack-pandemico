@@ -74,8 +74,8 @@ const postCountryData = async (channel, data) => {
                 text: {
                     type: 'mrkdwn',
                     text: `Latest status for ${data.country}: ${countries[data.country_code].closed ? 
-                        "```CLOSED - Please work from home and refrain from any travel in(to) the country.```" : 
-                        "```OPEN - Please remain cautious, limit office visits and travel in(to) the country.```"}`
+                        "```CLOSED: Please work from home and refrain from any travel in(to) the country.```" : 
+                        "```OPEN:   Please remain cautious, limit office visits and travel in(to) the country.```"}`
                 },
                 accessory: {
                     type: 'image',
