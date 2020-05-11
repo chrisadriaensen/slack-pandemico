@@ -94,25 +94,28 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                     });
                     break;
 
-                // Respond the healthy action
-                case 'pandemico_healthy':
+                // Respond the health check action
+                case 'pandemico_health_check':
 
-                    // TODO
-
-                    respond({
-                        text: `User healthy: ${action.value}`,
-                        response_type: 'ephemeral',
-                        replace_original: false
+                    slackClient.views.open({
+                        trigger_id: payload.trigger_id,
+                        view: {
+                            type: model,
+                            title: 'Health Check',
+                            blocks: [
+                                {
+                                    type: 'section',
+                                    text: {
+                                        type: 'mrkdwn',
+                                        text: '*test*'
+                                    }
+                                }
+                            ]
+                        }
                     });
-                    break;
-
-                // Respond the sick action
-                case 'pandemico_sick':
-
-                    // TODO
 
                     respond({
-                        text: `User sick: ${action.value}`,
+                        text: `User health check: ${payload.user.username}`,
                         response_type: 'ephemeral',
                         replace_original: false
                     });
@@ -272,7 +275,7 @@ const postCountryData = async (country, channel) => {
 };
 
 /* POST HEALTH CHECK TO USER */
-const postUserHealthCheck = async user => {
+const postHealthCheck = async user => {
     slackClient.chat.postMessage({
        channel: user,
        blocks: [
@@ -280,7 +283,7 @@ const postUserHealthCheck = async user => {
                type: 'section',
                text: {
                    type: 'mrkdwn',
-                   text: 'Please indicate your current status.'
+                   text: 'Please perform your regular health check.'
                }
            },
            {
@@ -290,20 +293,9 @@ const postUserHealthCheck = async user => {
                        type: 'button',
                        text: {
                            type: 'plain_text',
-                           text: 'Healthy'
+                           text: 'Start Health Check'
                        },
-                       style: 'primary',
-                       action_id: 'pandemico_healthy',
-                       value: user
-                   },
-                   {
-                       type: 'button',
-                       text: {
-                           type: 'plain_text',
-                           text: 'Sick'
-                       },
-                       style: 'danger',
-                       action_id: 'pandemico_sick',
+                       action_id: 'pandemico_health_check',
                        value: user
                    }
                ]
@@ -314,11 +306,12 @@ const postUserHealthCheck = async user => {
 
 /* PERFORM TEAM HEALTH CHECK */
 const performHealthCheck = async () => {
-    console.log('Health check initiated');
+    console.log('Initiated health check');
+
+    // Post health check to every user
     for await (const page of slackClient.paginate('users.list')) {
         for (const member of page.members) {
-            console.log(`posting to ${member.id}`);
-            postUserHealthCheck(member.id);
+            postHealthCheck(member.id);
         }
     }
 }
