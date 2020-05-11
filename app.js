@@ -113,7 +113,8 @@ const postCountryData = async (channel, data) => {
                 elements: [
                     {
                         type: 'mrkdwn',
-                        text: `Source: ${covidAPI}\nLast updated: ${data.updated}`
+                        text: `Source: ${covidAPI.replace('COUNTRY_CODE', data.country_code)}\n` +
+                              `Updated: ${data.updated}`
                     }
                 ]
             }
@@ -146,7 +147,19 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
             });
 
         }
+
+        respond({
+            text: `Unknown action: ${payload.actions.action_id}`,
+            response_type: 'ephemeral',
+            replace_original: false
+        });
     }
+
+    respond({
+        text: `Unknown type: ${payload.type}`,
+        response_type: 'ephemeral',
+        replace_original: false
+    });
 
 });
 
