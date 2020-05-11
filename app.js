@@ -17,13 +17,9 @@ const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
 const countries = {};
 const countryEvents = new events.EventEmitter();
 
-/* RECEIVE SLACK EVENTS */
+/* SLACK EVENTS */
 app.use('/events', slackEvents.requestListener());
 
-/* RECEIVE SLACK INTERACTIONS */
-app.use('/interactions', slackInteractions.requestListener());
-
-/* REACT TO APP MENTIONS */
 slackEvents.on('app_mention', async event => {
     console.log(`Received mention by ${event.user}: ${event.text}`);
 
@@ -32,9 +28,11 @@ slackEvents.on('app_mention', async event => {
 
 });
 
-/* REACT TO APP BUTTON INTERACTIONS */
-slackInteractions.action({ type: 'button' }, (payload, respond) => {
-    console.log(`Received button interaction: ${payload.type}`);
+/* SLACK INTERACTIONS */
+app.use('/interactions', slackInteractions.requestListener());
+
+slackInteractions.action({}, (payload, respond) => {
+    console.log(`Received interaction: ${payload.type}`);
 
     // Respond the block actions
     if (payload.type === 'block_actions') {
@@ -45,7 +43,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 case 'pandemico_subscribe':
 
                     // Subscribe user
-                    setSubscribed(action.value, payload.user.id, true);
+                    setUserSubscribed(action.value, payload.user.id, true);
 
                     respond({
                         text: `User subscribed: ${payload.user.username} to ${action.value}`,
@@ -58,7 +56,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 case 'pandemico_unsubscribe':
 
                     // Unsubscribe user
-                    setSubscribed(action.value, payload.user.id, false);
+                    setUserSubscribed(action.value, payload.user.id, false);
 
                     respond({
                         text: `User unsubscribed: ${payload.user.username} from ${action.value}`,
@@ -71,7 +69,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 case 'pandemico_close':
 
                     // Close country
-                    setClosed(action.value, true);
+                    setCountryClosed(action.value, true);
 
                     respond({
                         text: `Country closed: ${action.value}`,
@@ -84,7 +82,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
                 case 'pandemico_open':
 
                     // Open country
-                    setClosed(action.value, false);
+                    setCountryClosed(action.value, false);
 
                     respond({
                         text: `Country opened: ${action.value}`,
@@ -112,6 +110,15 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
         }
 
     // Respond the unknown interaction types
+    } else if (payload.type === 'view_submission') {
+
+        respond({
+            text: 'Thank you for completing your health check!',
+            response_type: 'ephemeral',
+            replace_original: false
+        });
+
+    // Respond the unknown interaction types
     } else {
 
         respond({
@@ -124,12 +131,32 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
 });
 
-/* REACT TO APP VIEW SUBMISSIONS */
-slackInteractions.action({ type: 'view_submission' }, (payload, respond) => {
-    console.log(`Received a view submission: ${payload.type}`);
-});
+/* COUNTRIES */
+const setCountryClosed = (country, close) => {
 
-/* POST COUNTRY DATA TO CHANNEL */
+    // Check if change
+    if (isCountryClosed(country) !== close) {
+
+        // Change country closed status
+        if (countries[country]) {
+            countries[country].closed = close;
+            countries[country].closed_ts = new Date();
+        } else {
+            countries[country] = {
+                closed: close,
+                closed_ts: new Date()
+            };
+        }
+
+        // Notify change
+        countryEvents.emit('change', country);
+
+    }
+
+};
+
+const isCountryClosed = country => countries[country] ? countries[country].closed : false;
+
 const postCountryData = async (country, channel) => {
 
     // Initialize data object
@@ -211,7 +238,7 @@ const postCountryData = async (country, channel) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Latest advice for ${data.country}:\n\n${isClosed(country) ?
+                    text: `Latest advice for ${data.country}:\n\n${isCountryClosed(country) ?
                         "      _*Please work from home and refrain from any travel.*_" :
                         "      _Please remain cautious and limit office visits and travel._"}`
                 },
@@ -219,10 +246,10 @@ const postCountryData = async (country, channel) => {
                     type: 'button',
                     text: {
                         type: 'plain_text',
-                        text: isClosed(country) ? 'Open Country' : 'Close Country'
+                        text: isCountryClosed(country) ? 'Open Country' : 'Close Country'
                     },
-                    style: isClosed(country) ? 'primary' : 'danger',
-                    action_id: isClosed(country) ? 'pandemico_open' : 'pandemico_close',
+                    style: isCountryClosed(country) ? 'primary' : 'danger',
+                    action_id: isCountryClosed(country) ? 'pandemico_open' : 'pandemico_close',
                     value: country
                 }
             },
@@ -242,9 +269,9 @@ const postCountryData = async (country, channel) => {
                         type: 'button',
                         text: {
                             type: 'plain_text',
-                            text: isSubscribed(country, channel) ? 'Unsubscribe' : 'Subscribe'
+                            text: isUserSubscribed(country, channel) ? 'Unsubscribe' : 'Subscribe'
                         },
-                        action_id: isSubscribed(country, channel) ? 'pandemico_unsubscribe' : 'pandemico_subscribe',
+                        action_id: isUserSubscribed(country, channel) ? 'pandemico_unsubscribe' : 'pandemico_subscribe',
                         value: country
                     }
                 ]
@@ -253,7 +280,52 @@ const postCountryData = async (country, channel) => {
     });
 };
 
-/* START TEAM HEALTH CHECK */
+countryEvents.on('change', country => {
+
+    // Notify subscribers of change
+    if (countries[country] && countries[country].subscribers) {
+        for (const subscriber of countries[country].subscribers) {
+            postCountryData(country, subscriber);
+        }
+    }
+
+});
+
+/* SUBSCRIPTIONS */
+const setUserSubscribed = (country, user, subscribe) => {
+
+    // Check if change
+    if (isUserSubscribed(country, user) !== subscribe) {
+
+        // Subscribe
+        if (subscribe) {
+            if (countries[country]) {
+                if (countries[country].subscribers) {
+                    countries[country].subscribers.push(user);
+                } else {
+                    countries[country].subscribers = [user];
+                }
+            } else {
+                countries[country] = {
+                    subscribers: [user]
+                };
+            }
+
+            // Post country data to user
+            postCountryData(country, user);
+
+            // Unsubscribe
+        } else if (countries[country] && countries[country].subscribers) {
+            countries[country].subscribers.splice(countries[country].subscribers.indexOf(user), 1);
+        }
+
+    }
+
+};
+
+const isUserSubscribed = (country, user) => countries[country] && countries[country].subscribers ? countries[country].subscribers.includes(user) : false;
+
+/* HEALTH CHECK */
 const startHealthCheck = async () => {
     console.log('Initiated health check');
 
@@ -265,7 +337,6 @@ const startHealthCheck = async () => {
     }
 }
 
-/* POST HEALTH CHECK TO USER */
 const postHealthCheck = async user => {
     slackClient.chat.postMessage({
         channel: user,
@@ -295,7 +366,6 @@ const postHealthCheck = async user => {
     });
 }
 
-/* OPEN HEALTH CHECK */
 const openHealthCheck = trigger_id => {
     slackClient.views.open({
         trigger_id: trigger_id,
@@ -344,80 +414,6 @@ const openHealthCheck = trigger_id => {
         }
     });
 }
-
-/* SET COUNTRY-USER SUBSCRIBED */
-const setSubscribed = (country, user, subscribe) => {
-
-    // Check if change
-    if (isSubscribed(country, user) !== subscribe) {
-
-        // Subscribe
-        if (subscribe) {
-            if (countries[country]) {
-                if (countries[country].subscribers) {
-                    countries[country].subscribers.push(user);
-                } else {
-                    countries[country].subscribers = [user];
-                }
-            } else {
-                countries[country] = {
-                    subscribers: [user]
-                };
-            }
-
-            // Post country data to user
-            postCountryData(country, user);
-
-        // Unsubscribe
-        } else if (countries[country] && countries[country].subscribers) {
-            countries[country].subscribers.splice(countries[country].subscribers.indexOf(user), 1);
-        }
-
-    }
-
-};
-
-/* CHECK WHETHER USER IS SUBSCRIBED */
-const isSubscribed = (country, user) => countries[country] && countries[country].subscribers ? countries[country].subscribers.includes(user) : false;
-
-/* SET COUNTRY CLOSED */
-const setClosed = (country, close) => {
-
-    // Check if change
-    if (isClosed(country) !== close) {
-
-        // Change country closed status
-        if (countries[country]) {
-            countries[country].closed = close;
-            countries[country].closed_ts = new Date();
-        } else {
-            countries[country] = {
-                closed: close,
-                closed_ts: new Date()
-            };
-        }
-
-        // Notify change
-        countryEvents.emit('change', country);
-
-    }
-
-};
-
-/* CHECK WHETHER COUNTRY IS CLOSED */
-const isClosed = country => countries[country] ? countries[country].closed : false;
-
-/* LISTEN TO COUNTRY CHANGES */
-countryEvents.on('change', country => {
-
-    // Notify subscribers of change
-    if (countries[country] && countries[country].subscribers) {
-        for (const subscriber of countries[country].subscribers) {
-            postCountryData(country, subscriber);
-        }
-    }
-
-});
 
 /* START SERVER */
 app.listen(port, () => {
