@@ -1,4 +1,5 @@
 /* IMPORTS */
+const events = require('events');
 const express = require('express');
 const fetch = require('node-fetch');
 const { createEventAdapter } = require('@slack/events-api');
@@ -14,6 +15,7 @@ const slackClient = new WebClient(process.env.SLACK_TOKEN);
 const covidAPI = 'http://corona-api.com/countries/COUNTRY_CODE';
 const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
 const countries = {};
+const countryEvents = new events.EventEmitter();
 
 /* RECEIVE SLACK EVENTS */
 app.use('/events', slackEvents.requestListener());
@@ -232,11 +234,29 @@ const subscribeUser = (country, user) => {
 
 /* SET COUNTRY CLOSED STATUS */
 const setClosed = (country, status) => {
+
+    // Change country closed status
     countries[country] ? countries[country].closed = status : countries[country] = { closed: status };
+
+    // Notify change
+    countryEvents.emit('change', country);
+
 };
 
 /* CHECK WHETHER COUNTRY IS CLOSED */
 const isClosed = country => countries[country] ? countries[country].closed : false;
+
+/* LISTEN TO COUNTRY CHANGES */
+countryEvents.on('change', country => {
+
+    // Notify subscribers of change
+    if (countries[country] && countries[country].subscribers) {
+        for (const subscriber of countries[country].subscribers) {
+            postCountryData(country, subscriber);
+        }
+    }
+
+});
 
 /* START SERVER */
 app.listen(port, () => {
