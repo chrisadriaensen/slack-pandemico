@@ -73,8 +73,14 @@ const postCountryData = async (channel, data) => {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `Status for ${data.country}: ${countries[data.country_code] ? 
-                        '*Country locked down; please work from home.*' : 'Country open; please remain cautious.'}`
+                    text: `Latest status for ${data.country}: ${countries[data.country_code].closed ? 
+                        "```CLOSED - Please work from home and refrain from any travel in(to) the country.```" : 
+                        "```OPEN - Please remain cautious, limit office visits and travel in(to) the country.```"}`
+                },
+                accessory: {
+                    type: 'image',
+                    image_url: flagsAPI.replace('COUNTRY_CODE', data.country_code),
+                    alt_text: `flag for ${data.country}`
                 }
             },
             {
@@ -88,11 +94,6 @@ const postCountryData = async (channel, data) => {
                             data.confirmed.total + " (" + data.confirmed.rate + "%) [Today: +" + data.confirmed.today + "]\n" +
                         "Deaths:    " + ' '.repeat(7 - data.deaths.total.toString().length) +
                             data.deaths.total + " (" + data.deaths.rate + "%) [Today: +" + data.deaths.today + "]```"
-                },
-                accessory: {
-                    type: 'image',
-                    image_url: flagsAPI.replace('COUNTRY_CODE', data.country_code),
-                    alt_text: `flag for ${data.country}`
                 }
             },
             {
@@ -153,7 +154,7 @@ slackInteractions.action({ type: 'button' }, (payload, respond) => {
 
             } else if (action.action_id === 'pandemico_lockdown') {
 
-                countries[action.value] = true;
+                countries[action.value].closed = true;
 
                 respond({
                     text: 'Locking down country.',
