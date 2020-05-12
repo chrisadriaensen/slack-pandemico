@@ -16,6 +16,7 @@ const covidAPI = 'http://corona-api.com/countries/COUNTRY_CODE';
 const flagsAPI = 'https://www.countryflags.io/COUNTRY_CODE/flat/64.png';
 const countries = {};
 const countryEvents = new events.EventEmitter();
+const beginHealthCheck = 60000; // ms after start
 
 /* SLACK EVENTS: Register listener */
 app.use('/events', slackEvents.requestListener());
@@ -438,5 +439,5 @@ app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 
     // Schedule team health check
-    setTimeout(startHealthCheck, 10000);
+    setTimeout(startHealthCheck, beginHealthCheck);
 });
