@@ -111,7 +111,7 @@ slackInteractions.action({}, (payload, respond) => {
             }
         }
 
-    // Respond the unknown interaction types
+    // Respond the view submissions
     } else if (payload.type === 'view_submission') {
 
         respond({
